@@ -1,21 +1,5 @@
 use std::fmt;
-
-#[derive(Debug, Clone)]
-pub struct RangeError {
-    num: u64,
-    prime: u64,
-}
-
-impl fmt::Display for RangeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Num {} not in field range 0 to {}",
-            self.num,
-            self.prime - 1
-        )
-    }
-}
+use std::ops;
 
 #[derive(Debug, Eq)]
 pub struct FieldElement {
@@ -24,11 +8,11 @@ pub struct FieldElement {
 }
 
 impl FieldElement {
-    pub fn new(num: u64, prime: u64) -> Result<FieldElement, RangeError> {
+    pub fn new(num: u64, prime: u64) -> Self {
         if num >= prime {
-            return Err(RangeError { num, prime });
+            panic!("Num {} not in field range 0 to {}", num, prime - 1);
         }
-        Ok(FieldElement { num, prime })
+        Self { num, prime }
     }
 }
 
@@ -41,5 +25,20 @@ impl fmt::Display for FieldElement {
 impl PartialEq for FieldElement {
     fn eq(&self, other: &Self) -> bool {
         self.num == other.num && self.prime == other.prime
+    }
+}
+
+impl ops::Add for FieldElement {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        if self.prime != rhs.prime {
+            panic!("Cannot add two numbers in different Fields");
+        }
+        let num = (self.num + rhs.num) % self.prime;
+        Self {
+            num,
+            prime: self.prime,
+        }
     }
 }
