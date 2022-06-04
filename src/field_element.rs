@@ -3,12 +3,12 @@ use std::ops;
 
 #[derive(Debug, Eq)]
 pub struct FieldElement {
-    num: u64,
-    prime: u64,
+    num: i64,
+    prime: i64,
 }
 
 impl FieldElement {
-    pub fn new(num: u64, prime: u64) -> Self {
+    pub fn new(num: i64, prime: i64) -> Self {
         if num >= prime {
             panic!("Num {} not in field range 0 to {}", num, prime - 1);
         }
@@ -31,11 +31,26 @@ impl PartialEq for FieldElement {
 impl ops::Add for FieldElement {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self {
+    fn add(self, rhs: Self) -> Self::Output {
         if self.prime != rhs.prime {
             panic!("Cannot add two numbers in different Fields");
         }
-        let num = (self.num + rhs.num) % self.prime;
+        let num = (self.num + rhs.num).rem_euclid(self.prime);
+        Self {
+            num,
+            prime: self.prime,
+        }
+    }
+}
+
+impl ops::Sub for FieldElement {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        if self.prime != rhs.prime {
+            panic!("Cannot subtract two numbers in different Fields");
+        }
+        let num = (self.num - rhs.num).rem_euclid(self.prime);
         Self {
             num,
             prime: self.prime,
