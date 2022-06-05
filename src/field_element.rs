@@ -57,3 +57,18 @@ impl ops::Sub for FieldElement {
         }
     }
 }
+
+impl ops::Mul for FieldElement {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        if self.prime != rhs.prime {
+            panic!("Cannot multiply two numbers in different Fields");
+        }
+        let num = (self.num * rhs.num).rem_euclid(self.prime);
+        Self {
+            num,
+            prime: self.prime,
+        }
+    }
+}
