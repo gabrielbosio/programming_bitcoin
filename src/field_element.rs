@@ -14,6 +14,14 @@ impl FieldElement {
         }
         Self { num, prime }
     }
+
+    pub fn pow(&self, exp: u32) -> Self {
+        let num = self.num.pow(exp).rem_euclid(self.prime);
+        Self {
+            num,
+            prime: self.prime,
+        }
+    }
 }
 
 impl fmt::Display for FieldElement {
