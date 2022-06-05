@@ -1,25 +1,26 @@
+use num_bigint::BigInt;
 use std::fmt;
 use std::ops;
 
 #[derive(Debug, Eq)]
 pub struct FieldElement {
-    num: i64,
-    prime: i64,
+    num: BigInt,
+    prime: BigInt,
 }
 
 impl FieldElement {
-    pub fn new(num: i64, prime: i64) -> Self {
+    pub fn new(num: BigInt, prime: BigInt) -> Self {
         if num >= prime {
             panic!("Num {} not in field range 0 to {}", num, prime - 1);
         }
         Self { num, prime }
     }
 
-    pub fn pow(&self, exp: u32) -> Self {
-        let num = self.num.pow(exp).rem_euclid(self.prime);
+    pub fn pow(&self, exponent: BigInt) -> Self {
+        let num = self.num.modpow(&exponent, &self.prime);
         Self {
             num,
-            prime: self.prime,
+            prime: self.prime.clone(),
         }
     }
 }
@@ -43,7 +44,7 @@ impl ops::Add for FieldElement {
         if self.prime != rhs.prime {
             panic!("Cannot add two numbers in different Fields");
         }
-        let num = (self.num + rhs.num).rem_euclid(self.prime);
+        let num = (self.num + rhs.num) % self.prime.clone();
         Self {
             num,
             prime: self.prime,
@@ -58,7 +59,7 @@ impl ops::Sub for FieldElement {
         if self.prime != rhs.prime {
             panic!("Cannot subtract two numbers in different Fields");
         }
-        let num = (self.num - rhs.num).rem_euclid(self.prime);
+        let num = (self.num - rhs.num) % self.prime.clone();
         Self {
             num,
             prime: self.prime,
@@ -73,7 +74,7 @@ impl ops::Mul for FieldElement {
         if self.prime != rhs.prime {
             panic!("Cannot multiply two numbers in different Fields");
         }
-        let num = (self.num * rhs.num).rem_euclid(self.prime);
+        let num = (self.num * rhs.num) % self.prime.clone();
         Self {
             num,
             prime: self.prime,
