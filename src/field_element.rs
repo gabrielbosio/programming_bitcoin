@@ -1,4 +1,5 @@
 use num_bigint::BigInt;
+use num_bigint::ToBigInt;
 use std::fmt;
 use std::ops;
 
@@ -75,6 +76,24 @@ impl ops::Mul for FieldElement {
             panic!("Cannot multiply two numbers in different Fields");
         }
         let num = (self.num * rhs.num) % self.prime.clone();
+        Self {
+            num,
+            prime: self.prime,
+        }
+    }
+}
+
+impl ops::Div for FieldElement {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        if self.prime != rhs.prime {
+            panic!("Cannot divide two numbers in different Fields");
+        }
+        // a / b == a * b.pow(p - 2)
+        let exponent = self.prime.clone() - 2_i32.to_bigint().unwrap();
+        let rhs_factor = rhs.num.modpow(&exponent, &self.prime);
+        let num = (self.num * rhs_factor) % self.prime.clone();
         Self {
             num,
             prime: self.prime,
