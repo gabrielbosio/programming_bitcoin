@@ -18,7 +18,8 @@ impl FieldElement {
     }
 
     pub fn pow(&self, exponent: BigInt) -> Self {
-        let num = self.num.modpow(&exponent, &self.prime);
+        let positive_exponent = exponent.rem_euclid(self.prime.clone() - 1);
+        let num = self.num.modpow(&positive_exponent, &self.prime);
         Self {
             num,
             prime: self.prime.clone(),
@@ -155,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    fn power_a_field_element() {
+    fn power_a_field_element_to_a_positive_exponent() {
         let prime = 13_i32.to_bigint().unwrap();
         let a_num = 3_i32.to_bigint().unwrap();
         let b_num = 1_i32.to_bigint().unwrap();
@@ -177,5 +178,17 @@ mod tests {
         let c = FieldElement::new(c_num, prime);
 
         assert_eq!(a / b, c);
+    }
+
+    #[test]
+    fn power_a_field_element_to_a_negative_exponent() {
+        let prime = 13_i32.to_bigint().unwrap();
+        let a_num = 7_i32.to_bigint().unwrap();
+        let b_num = 8_i32.to_bigint().unwrap();
+        let a = FieldElement::new(a_num, prime.clone());
+        let b = FieldElement::new(b_num, prime);
+        let exponent = -3_i32.to_bigint().unwrap();
+
+        assert_eq!(a.pow(exponent), b);
     }
 }
