@@ -73,6 +73,19 @@ impl ops::Add for Point {
                     b: self.b,
                 }
             }
+            ((Some(self_x), Some(self_y)), (Some(rhs_x), Some(rhs_y))) if self_x != rhs_x => {
+                let slope = (rhs_y - self_y.clone()) / (rhs_x.clone() - self_x.clone());
+                println!("slope: {}", slope.clone());
+                let result_x = slope.clone() * slope.clone() - self_x.clone() - rhs_x;
+                let result_y = slope * (self_x - result_x.clone()) - self_y;
+
+                Self {
+                    x: Some(result_x),
+                    y: Some(result_y),
+                    a: self.a,
+                    b: self.b,
+                }
+            }
             // Other cases, TODO
             _ => self,
         }
@@ -112,7 +125,7 @@ mod tests {
     }
 
     #[test]
-    fn add_two_points() {
+    fn add_two_points_with_the_same_x() {
         let p1_x = Some(-1_i32.to_bigint().unwrap());
         let p1_y = Some(-1_i32.to_bigint().unwrap());
         let a = 5_i32.to_bigint().unwrap();
@@ -126,5 +139,21 @@ mod tests {
         assert_eq!(p1.clone() + inf.clone(), p1);
         assert_eq!(inf.clone() + p2.clone(), p2);
         assert_eq!(p1 + p2, inf);
+    }
+    #[test]
+    fn add_two_points_with_different_x() {
+        let p1_x = Some(2_i32.to_bigint().unwrap());
+        let p1_y = Some(5_i32.to_bigint().unwrap());
+        let a = 5_i32.to_bigint().unwrap();
+        let b = 7_i32.to_bigint().unwrap();
+        let p2_x = Some(-1_i32.to_bigint().unwrap());
+        let p2_y = Some(-1_i32.to_bigint().unwrap());
+        let p3_x = Some(3_i32.to_bigint().unwrap());
+        let p3_y = Some(-7_i32.to_bigint().unwrap());
+        let p1 = Point::new(p1_x, p1_y, a.clone(), b.clone());
+        let p2 = Point::new(p2_x, p2_y, a.clone(), b.clone());
+        let p3 = Point::new(p3_x, p3_y, a.clone(), b.clone());
+
+        assert_eq!(p1 + p2, p3);
     }
 }
