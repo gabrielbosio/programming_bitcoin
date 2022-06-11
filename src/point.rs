@@ -61,7 +61,6 @@ impl<const A: i128, const B: i128> ops::Add for Point<A, B> {
             }
             ((Some(self_x), Some(self_y)), (Some(rhs_x), Some(rhs_y))) if self_x != rhs_x => {
                 let slope = (rhs_y - self_y) / (rhs_x - self_x);
-                println!("slope: {}", slope);
                 let result_x = slope * slope - self_x - rhs_x;
                 let result_y = slope * (self_x - result_x) - self_y;
 
