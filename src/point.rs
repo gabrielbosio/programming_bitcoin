@@ -70,7 +70,7 @@ impl<const A: i128, const B: i128> ops::Add for Point<A, B> {
                 }
             }
             ((Some(self_x), Some(self_y)), (Some(rhs_x), Some(rhs_y)))
-                if self_x == rhs_x && self_y == rhs_y =>
+                if self_x == rhs_x && self_y == rhs_y && self_y != 0 =>
             {
                 let slope = (3 * self_x * self_x + A) / (2 * self_y);
                 let result_x = slope * slope - 2 * self_x;
@@ -81,8 +81,12 @@ impl<const A: i128, const B: i128> ops::Add for Point<A, B> {
                     y: Some(result_y),
                 }
             }
-            // Other cases, TODO
-            _ => self,
+            ((Some(self_x), Some(0)), (Some(rhs_x), Some(0))) if self_x == rhs_x => {
+                Self { x: None, y: None }
+            }
+            _ => {
+                panic!("This shouldn't happen");
+            }
         }
     }
 }
@@ -127,10 +131,18 @@ mod tests {
     }
 
     #[test]
-    fn add_two_equal_points() {
+    fn add_two_equal_points_with_nonzero_y() {
         let p1 = Point::<5, 7>::new(Some(-1), Some(-1));
         let p2 = Point::<5, 7>::new(Some(18), Some(77));
 
         assert_eq!(p1 + p1, p2);
+    }
+
+    #[test]
+    fn add_two_equal_points_with_y_equals_to_zero() {
+        let p = Point::<3, 4>::new(Some(-1), Some(0));
+        let inf = Point::<3, 4>::new(None, None);
+
+        assert_eq!(p + p, inf);
     }
 }
