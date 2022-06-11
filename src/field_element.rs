@@ -1,114 +1,82 @@
-use num_bigint::BigInt;
-use num_bigint::ToBigInt;
 use std::fmt;
 use std::ops;
 
 #[derive(Debug, Eq)]
-pub struct FieldElement {
-    num: BigInt,
-    prime: BigInt,
-}
+pub struct FieldElement<const P: i128>(i128);
 
-impl FieldElement {
-    pub fn new(num: BigInt, prime: BigInt) -> Self {
-        if num >= prime || num < 0_i32.to_bigint().unwrap() {
-            panic!("Num {} not in field range 0 to {}", num, prime - 1);
-        }
-        Self { num, prime }
+impl<const P: i128> FieldElement<P> {
+    pub fn new(num: i128) -> Self {
+        Self(num)
     }
 
-    pub fn pow(&self, exponent: BigInt) -> Self {
-        let positive_exponent = exponent.rem_euclid(self.prime.clone() - 1);
-        let num = self.num.modpow(&positive_exponent, &self.prime);
-        Self {
-            num,
-            prime: self.prime.clone(),
-        }
+    pub fn pow(&self, exponent: i128) -> Self {
+        let positive_exponent = exponent.rem_euclid(P - 1);
+        let num = self.0.modpow(positive_exponent, P);
+        Self(num)
     }
 }
 
-impl fmt::Display for FieldElement {
+impl<const P: i128> fmt::Display for FieldElement<P> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "FieldElement_{}({})", self.prime, self.num)
+        write!(f, "FieldElement_{}({})", P, self.0)
     }
 }
 
-impl PartialEq for FieldElement {
+impl<const P: i128> PartialEq for FieldElement<P> {
     fn eq(&self, other: &Self) -> bool {
-        self.num == other.num && self.prime == other.prime
+        self.0 == other.0
     }
 }
 
-impl ops::Add for FieldElement {
+impl<const P: i128> ops::Add for FieldElement<P> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        if self.prime != rhs.prime {
-            panic!("Cannot add two numbers in different Fields");
-        }
-        let num = (self.num + rhs.num).rem_euclid(self.prime.clone());
-        Self {
-            num,
-            prime: self.prime,
-        }
+        let num = (self.0 + rhs.0).rem_euclid(P);
+        Self(num)
     }
 }
 
-impl ops::Sub for FieldElement {
+impl<const P: i128> ops::Sub for FieldElement<P> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        if self.prime != rhs.prime {
-            panic!("Cannot subtract two numbers in different Fields");
-        }
-        let num = (self.num - rhs.num).rem_euclid(self.prime.clone());
-        Self {
-            num,
-            prime: self.prime,
-        }
+        let num = (self.0 - rhs.0).rem_euclid(P);
+        Self(num)
     }
 }
 
-impl ops::Mul for FieldElement {
+impl<const P: i128> ops::Mul for FieldElement<P> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        if self.prime != rhs.prime {
-            panic!("Cannot multiply two numbers in different Fields");
-        }
-        let num = (self.num * rhs.num).rem_euclid(self.prime.clone());
-        Self {
-            num,
-            prime: self.prime,
-        }
+        let num = (self.0 * rhs.0).rem_euclid(P);
+        Self(num)
     }
 }
 
-impl ops::Div for FieldElement {
+impl<const P: i128> ops::Div for FieldElement<P> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
-        if self.prime != rhs.prime {
-            panic!("Cannot divide two numbers in different Fields");
-        }
         // a / b == a * b.pow(p - 2)
-        let exponent = self.prime.clone() - 2_i32.to_bigint().unwrap();
-        let rhs_factor = rhs.num.modpow(&exponent, &self.prime);
-        let num = (self.num * rhs_factor) % self.prime.clone();
-        Self {
-            num,
-            prime: self.prime,
-        }
+        let rhs_factor = rhs.0.modpow(P - 2, P);
+        let num = (self.0 * rhs_factor) % P;
+        Self(num)
     }
 }
 
-trait RemEuclid {
-    fn rem_euclid(&self, rhs: Self) -> Self;
+trait ModPow {
+    fn modpow(self, exponent: Self, modulus: Self) -> Self;
 }
 
-impl RemEuclid for BigInt {
-    fn rem_euclid(&self, rhs: Self) -> Self {
-        self.modpow(&1_i32.to_bigint().unwrap(), &rhs)
+impl ModPow for i128 {
+    fn modpow(self, exponent: Self, modulus: Self) -> Self {
+        let mut result = self;
+        for _ in 1..exponent {
+            result = (result * self).rem_euclid(modulus);
+        }
+        result
     }
 }
 
@@ -118,77 +86,53 @@ mod tests {
 
     #[test]
     fn add_two_field_elements() {
-        let prime = 13_i32.to_bigint().unwrap();
-        let a_num = 7_i32.to_bigint().unwrap();
-        let b_num = 12_i32.to_bigint().unwrap();
-        let c_num = 6_i32.to_bigint().unwrap();
-        let a = FieldElement::new(a_num, prime.clone());
-        let b = FieldElement::new(b_num, prime.clone());
-        let c = FieldElement::new(c_num, prime);
+        let a = FieldElement::<13>::new(7);
+        let b = FieldElement::<13>::new(12);
+        let c = FieldElement::<13>::new(6);
 
         assert_eq!(a + b, c);
     }
 
     #[test]
     fn substract_two_field_elements() {
-        let prime = 19_i32.to_bigint().unwrap();
-        let a_num = 6_i32.to_bigint().unwrap();
-        let b_num = 13_i32.to_bigint().unwrap();
-        let c_num = 12_i32.to_bigint().unwrap();
-        let a = FieldElement::new(a_num, prime.clone());
-        let b = FieldElement::new(b_num, prime.clone());
-        let c = FieldElement::new(c_num, prime);
+        let a = FieldElement::<19>::new(6);
+        let b = FieldElement::<19>::new(13);
+        let c = FieldElement::<19>::new(12);
 
         assert_eq!(a - b, c);
     }
 
     #[test]
     fn multiply_two_field_elements() {
-        let prime = 13_i32.to_bigint().unwrap();
-        let a_num = 3_i32.to_bigint().unwrap();
-        let b_num = 12_i32.to_bigint().unwrap();
-        let c_num = 10_i32.to_bigint().unwrap();
-        let a = FieldElement::new(a_num, prime.clone());
-        let b = FieldElement::new(b_num, prime.clone());
-        let c = FieldElement::new(c_num, prime);
+        let a = FieldElement::<13>::new(3);
+        let b = FieldElement::<13>::new(12);
+        let c = FieldElement::<13>::new(10);
 
         assert_eq!(a * b, c);
     }
 
     #[test]
     fn power_a_field_element_to_a_positive_exponent() {
-        let prime = 13_i32.to_bigint().unwrap();
-        let a_num = 3_i32.to_bigint().unwrap();
-        let b_num = 1_i32.to_bigint().unwrap();
-        let a = FieldElement::new(a_num, prime.clone());
-        let b = FieldElement::new(b_num, prime);
-        let exponent = 3_i32.to_bigint().unwrap();
+        let a = FieldElement::<13>::new(3);
+        let b = FieldElement::<13>::new(1);
 
-        assert_eq!(a.pow(exponent), b);
+        assert_eq!(a.pow(3), b);
     }
 
     #[test]
     fn divide_two_field_elements() {
-        let prime = 19_i32.to_bigint().unwrap();
-        let a_num = 2_i32.to_bigint().unwrap();
-        let b_num = 7_i32.to_bigint().unwrap();
-        let c_num = 3_i32.to_bigint().unwrap();
-        let a = FieldElement::new(a_num, prime.clone());
-        let b = FieldElement::new(b_num, prime.clone());
-        let c = FieldElement::new(c_num, prime);
+        let a = FieldElement::<19>::new(2);
+        let b = FieldElement::<19>::new(7);
+        let c = FieldElement::<19>::new(3);
 
         assert_eq!(a / b, c);
     }
 
     #[test]
     fn power_a_field_element_to_a_negative_exponent() {
-        let prime = 13_i32.to_bigint().unwrap();
-        let a_num = 7_i32.to_bigint().unwrap();
-        let b_num = 8_i32.to_bigint().unwrap();
-        let a = FieldElement::new(a_num, prime.clone());
-        let b = FieldElement::new(b_num, prime);
-        let exponent = -3_i32.to_bigint().unwrap();
+        let a = FieldElement::<13>::new(7);
+        let b = FieldElement::<13>::new(8);
 
-        assert_eq!(a.pow(exponent), b);
+        assert_eq!(a.pow(-3), b);
     }
 }
