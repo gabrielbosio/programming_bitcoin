@@ -127,15 +127,34 @@ impl<const P: i128> ops::Add for Point<P> {
     }
 }
 
+impl<const P: i128> ops::Mul<FieldElement<P>> for Point<P> {
+    type Output = Self;
+
+    fn mul(self, rhs: FieldElement<P>) -> Self::Output {
+        let mut result = self;
+
+        for _ in 1..rhs.0 {
+            result = result + self;
+        }
+
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    const PRIME: i128 = 223;
+
+    struct TestCurve<const P: i128> {
+        a: FieldElement<P>,
+        b: FieldElement<P>,
+    }
 
     #[test]
     fn evaluate_points_on_elliptic_curve() {
-        const PRIME: i128 = 223;
-        let a = FieldElement::<PRIME>::new(0);
-        let b = FieldElement::<PRIME>::new(7);
+        let TestCurve::<PRIME> { a, b } = setup();
+
         let points = [(192, 105), (17, 56), (200, 119), (1, 193), (42, 99)];
         let mut validations = Vec::new();
 
@@ -150,5 +169,80 @@ mod tests {
         }
 
         assert_eq!(validations, vec![true, true, false, true, false]);
+    }
+
+    #[test]
+    fn add_two_points() {
+        let TestCurve::<PRIME> { a, b } = setup();
+
+        let p1s = [(170, 142), (47, 71), (143, 98)];
+        let p2s = [(60, 139), (17, 56), (17, 56)];
+        let p3s = [(220, 181), (215, 68), (187, 36)];
+
+        for i in 0..p1s.len() {
+            let (x1_raw, y1_raw) = p1s[i];
+            let (x2_raw, y2_raw) = p2s[i];
+            let (x3_raw, y3_raw) = p3s[i];
+            let p1_x = FieldElement::<PRIME>::new(x1_raw);
+            let p1_y = FieldElement::<PRIME>::new(y1_raw);
+            let p2_x = FieldElement::<PRIME>::new(x2_raw);
+            let p2_y = FieldElement::<PRIME>::new(y2_raw);
+            let p3_x = FieldElement::<PRIME>::new(x3_raw);
+            let p3_y = FieldElement::<PRIME>::new(y3_raw);
+            let p1 = Point::<PRIME>::new(Some(p1_x), Some(p1_y), a, b).unwrap();
+            let p2 = Point::<PRIME>::new(Some(p2_x), Some(p2_y), a, b).unwrap();
+            let p3 = Point::<PRIME>::new(Some(p3_x), Some(p3_y), a, b).unwrap();
+
+            assert_eq!(p1 + p2, p3);
+        }
+    }
+
+    #[test]
+    fn multiply_a_point_by_a_scalar() {
+        let TestCurve::<PRIME> { a, b } = setup();
+
+        let p1s = [
+            (192, 105),
+            (143, 98),
+            (47, 71),
+            (47, 71),
+            (47, 71),
+            (47, 71),
+        ];
+        let scalars = [2, 2, 2, 4, 8, 21];
+        let p2s = [
+            (49, 71),
+            (64, 168),
+            (36, 111),
+            (194, 51),
+            (116, 55),
+            (-1, -1),
+        ];
+
+        for i in 0..p1s.len() {
+            let (x1_raw, y1_raw) = p1s[i];
+            let p1_x = FieldElement::<PRIME>::new(x1_raw);
+            let p1_y = FieldElement::<PRIME>::new(y1_raw);
+            let p1 = Point::<PRIME>::new(Some(p1_x), Some(p1_y), a, b).unwrap();
+            let scalar = FieldElement::<PRIME>::new(scalars[i]);
+            let p2 = match p2s[i] {
+                (-1, -1) => Point::<PRIME>::new(None, None, a, b),
+                (x2_raw, y2_raw) => {
+                    let p2_x = FieldElement::<PRIME>::new(x2_raw);
+                    let p2_y = FieldElement::<PRIME>::new(y2_raw);
+                    Point::<PRIME>::new(Some(p2_x), Some(p2_y), a, b)
+                }
+            }
+            .unwrap();
+
+            assert_eq!(scalar * p1, p2);
+        }
+    }
+
+    fn setup() -> TestCurve<PRIME> {
+        let a = FieldElement::<PRIME>::new(0);
+        let b = FieldElement::<PRIME>::new(7);
+
+        TestCurve { a, b }
     }
 }
