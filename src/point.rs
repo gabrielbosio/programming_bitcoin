@@ -150,9 +150,9 @@ impl<const P: i128> ops::Mul<FieldElement<P>> for Point<P> {
 
         while coefficient > 0 {
             if coefficient & 1 != 0 {
-                result = result + current;
+                result += current;
             }
-            current = current + current;
+            current += current;
             coefficient >>= 1;
         }
 
@@ -170,13 +170,19 @@ impl<const P: i128> ops::Mul<Point<P>> for FieldElement<P> {
 
         while coefficient > 0 {
             if coefficient & 1 != 0 {
-                result = result + current;
+                result += current;
             }
-            current = current + current;
+            current += current;
             coefficient >>= 1;
         }
 
         result
+    }
+}
+
+impl<const P: i128> ops::AddAssign for Point<P> {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
     }
 }
 
@@ -289,7 +295,7 @@ mod tests {
 
         while !results.contains(&p) {
             results.push(p);
-            p = p + p;
+            p += p;
             order += 1;
         }
 
