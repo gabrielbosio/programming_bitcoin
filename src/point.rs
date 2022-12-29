@@ -13,6 +13,19 @@ pub struct Point<const P: i128> {
 
 impl<const P: i128> Point<P> {
     pub fn new(
+        x: FieldElement<P>,
+        y: FieldElement<P>,
+        a: FieldElement<P>,
+        b: FieldElement<P>,
+    ) -> Result<Self, String> {
+        Self::init(Some(x), Some(y), a, b)
+    }
+
+    pub fn infinity(a: FieldElement<P>, b: FieldElement<P>) -> Result<Self, String> {
+        Self::init(None, None, a, b)
+    }
+
+    fn init(
         x: Option<FieldElement<P>>,
         y: Option<FieldElement<P>>,
         a: FieldElement<P>,
@@ -25,10 +38,10 @@ impl<const P: i128> Point<P> {
                 }
             }
             (Some(x_num), None) => {
-                return Err(format!("({}, None) is not valid", x_num));
+                panic!("({}, None) is not valid", x_num);
             }
             (None, Some(y_num)) => {
-                return Err(format!("(None, {}) is not valid", y_num));
+                panic!("(None, {}) is not valid", y_num);
             }
             (None, None) => {}
         }
@@ -162,7 +175,7 @@ mod tests {
             let x = FieldElement::<PRIME>::new(x_raw);
             let y = FieldElement::<PRIME>::new(y_raw);
 
-            match Point::<PRIME>::new(Some(x), Some(y), a, b) {
+            match Point::<PRIME>::new(x, y, a, b) {
                 Ok(_) => validations.push(true),
                 Err(_) => validations.push(false),
             }
@@ -189,9 +202,9 @@ mod tests {
             let p2_y = FieldElement::<PRIME>::new(y2_raw);
             let p3_x = FieldElement::<PRIME>::new(x3_raw);
             let p3_y = FieldElement::<PRIME>::new(y3_raw);
-            let p1 = Point::<PRIME>::new(Some(p1_x), Some(p1_y), a, b).unwrap();
-            let p2 = Point::<PRIME>::new(Some(p2_x), Some(p2_y), a, b).unwrap();
-            let p3 = Point::<PRIME>::new(Some(p3_x), Some(p3_y), a, b).unwrap();
+            let p1 = Point::<PRIME>::new(p1_x, p1_y, a, b).unwrap();
+            let p2 = Point::<PRIME>::new(p2_x, p2_y, a, b).unwrap();
+            let p3 = Point::<PRIME>::new(p3_x, p3_y, a, b).unwrap();
 
             assert_eq!(p1 + p2, p3);
         }
@@ -223,14 +236,14 @@ mod tests {
             let (x1_raw, y1_raw) = p1s[i];
             let p1_x = FieldElement::<PRIME>::new(x1_raw);
             let p1_y = FieldElement::<PRIME>::new(y1_raw);
-            let p1 = Point::<PRIME>::new(Some(p1_x), Some(p1_y), a, b).unwrap();
+            let p1 = Point::<PRIME>::new(p1_x, p1_y, a, b).unwrap();
             let scalar = FieldElement::<PRIME>::new(scalars[i]);
             let p2 = match p2s[i] {
-                (-1, -1) => Point::<PRIME>::new(None, None, a, b),
+                (-1, -1) => Point::<PRIME>::infinity(a, b),
                 (x2_raw, y2_raw) => {
                     let p2_x = FieldElement::<PRIME>::new(x2_raw);
                     let p2_y = FieldElement::<PRIME>::new(y2_raw);
-                    Point::<PRIME>::new(Some(p2_x), Some(p2_y), a, b)
+                    Point::<PRIME>::new(p2_x, p2_y, a, b)
                 }
             }
             .unwrap();

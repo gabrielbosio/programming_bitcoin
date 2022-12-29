@@ -8,7 +8,15 @@ pub struct IntPoint<const A: i128, const B: i128> {
 }
 
 impl<const A: i128, const B: i128> IntPoint<A, B> {
-    pub fn new(x: Option<i128>, y: Option<i128>) -> Self {
+    pub fn new(x: i128, y: i128) -> Self {
+        Self::init(Some(x), Some(y))
+    }
+
+    pub fn infinity() -> Self {
+        Self::init(None, None)
+    }
+
+    fn init(x: Option<i128>, y: Option<i128>) -> Self {
         match (x, y) {
             (Some(x_num), Some(y_num)) => {
                 if y_num.pow(2) != x_num.pow(3) + A * x_num + B {
@@ -98,23 +106,23 @@ mod tests {
     #[test]
     #[should_panic]
     fn create_a_point_that_is_not_in_the_curve() {
-        IntPoint::<5, 7>::new(Some(-1), Some(-1));
-        IntPoint::<5, 7>::new(Some(-1), Some(-2));
+        IntPoint::<5, 7>::new(-1, -1);
+        IntPoint::<5, 7>::new(-1, -2);
     }
 
     #[test]
     fn compare_two_points() {
-        let p1 = IntPoint::<5, 7>::new(Some(-1), Some(-1));
-        let p2 = IntPoint::<5, 7>::new(Some(-1), Some(-1));
+        let p1 = IntPoint::<5, 7>::new(-1, -1);
+        let p2 = IntPoint::<5, 7>::new(-1, -1);
 
         assert_eq!(p1, p2);
     }
 
     #[test]
     fn add_two_points_with_the_same_x() {
-        let p1 = IntPoint::<5, 7>::new(Some(-1), Some(-1));
-        let p2 = IntPoint::<5, 7>::new(Some(-1), Some(1));
-        let inf = IntPoint::<5, 7>::new(None, None);
+        let p1 = IntPoint::<5, 7>::new(-1, -1);
+        let p2 = IntPoint::<5, 7>::new(-1, 1);
+        let inf = IntPoint::<5, 7>::infinity();
 
         assert_eq!(p1 + inf, p1);
         assert_eq!(inf + p2, p2);
@@ -123,25 +131,25 @@ mod tests {
 
     #[test]
     fn add_two_points_with_different_x() {
-        let p1 = IntPoint::<5, 7>::new(Some(2), Some(5));
-        let p2 = IntPoint::<5, 7>::new(Some(-1), Some(-1));
-        let p3 = IntPoint::<5, 7>::new(Some(3), Some(-7));
+        let p1 = IntPoint::<5, 7>::new(2, 5);
+        let p2 = IntPoint::<5, 7>::new(-1, -1);
+        let p3 = IntPoint::<5, 7>::new(3, -7);
 
         assert_eq!(p1 + p2, p3);
     }
 
     #[test]
     fn add_two_equal_points_with_nonzero_y() {
-        let p1 = IntPoint::<5, 7>::new(Some(-1), Some(-1));
-        let p2 = IntPoint::<5, 7>::new(Some(18), Some(77));
+        let p1 = IntPoint::<5, 7>::new(-1, -1);
+        let p2 = IntPoint::<5, 7>::new(18, 77);
 
         assert_eq!(p1 + p1, p2);
     }
 
     #[test]
     fn add_two_equal_points_with_y_equals_to_zero() {
-        let p = IntPoint::<3, 4>::new(Some(-1), Some(0));
-        let inf = IntPoint::<3, 4>::new(None, None);
+        let p = IntPoint::<3, 4>::new(-1, 0);
+        let inf = IntPoint::<3, 4>::infinity();
 
         assert_eq!(p + p, inf);
     }
