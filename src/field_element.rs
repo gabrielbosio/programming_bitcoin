@@ -1,4 +1,3 @@
-use crate::point::Point;
 use std::fmt;
 use std::ops;
 
@@ -64,20 +63,6 @@ impl<const P: i128> ops::Div for FieldElement<P> {
         let rhs_factor = rhs.0.modpow(P - 2, P);
         let num = (self.0 * rhs_factor) % P;
         Self(num)
-    }
-}
-
-impl<const P: i128> ops::Mul<Point<P>> for FieldElement<P> {
-    type Output = Point<P>;
-
-    fn mul(self, rhs: Point<P>) -> Self::Output {
-        let mut result = rhs;
-
-        for _ in 1..self.0 {
-            result = result + rhs;
-        }
-
-        result
     }
 }
 

@@ -144,10 +144,36 @@ impl<const P: i128> ops::Mul<FieldElement<P>> for Point<P> {
     type Output = Self;
 
     fn mul(self, rhs: FieldElement<P>) -> Self::Output {
-        let mut result = self;
+        let mut current = self;
+        let mut result = Point::<P>::infinity(self.a, self.b);
+        let mut coefficient = rhs.0;
 
-        for _ in 1..rhs.0 {
-            result = result + self;
+        while coefficient > 0 {
+            if coefficient & 1 != 0 {
+                result = result + current;
+            }
+            current = current + current;
+            coefficient >>= 1;
+        }
+
+        result
+    }
+}
+
+impl<const P: i128> ops::Mul<Point<P>> for FieldElement<P> {
+    type Output = Point<P>;
+
+    fn mul(self, rhs: Point<P>) -> Self::Output {
+        let mut current = rhs;
+        let mut result = Point::<P>::infinity(rhs.a, rhs.b);
+        let mut coefficient = self.0;
+
+        while coefficient > 0 {
+            if coefficient & 1 != 0 {
+                result = result + current;
+            }
+            current = current + current;
+            coefficient >>= 1;
         }
 
         result
@@ -249,6 +275,25 @@ mod tests {
 
             assert_eq!(scalar * p1, p2);
         }
+    }
+
+    #[test]
+    fn calculate_order_of_group() {
+        let TestCurve::<PRIME> { a, b } = setup();
+
+        let x = FieldElement::<PRIME>::new(15);
+        let y = FieldElement::<PRIME>::new(86);
+        let mut p = Point::<PRIME>::new(x, y, a, b).unwrap();
+        let mut results = Vec::new();
+        let mut order = 1;
+
+        while !results.contains(&p) {
+            results.push(p);
+            p = p + p;
+            order += 1;
+        }
+
+        assert_eq!(order, 4);
     }
 
     fn setup() -> TestCurve<PRIME> {
