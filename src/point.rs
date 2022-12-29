@@ -53,6 +53,22 @@ impl<const P: i128> Point<P> {
             panic!("{} and {} are not on the same curve", self, other)
         }
     }
+
+    fn do_mul(&self, rhs: FieldElement<P>) -> Self {
+        let mut current = *self;
+        let mut result = Point::<P>::infinity(self.a, self.b);
+        let mut coefficient = rhs.0;
+
+        while coefficient > 0 {
+            if coefficient & 1 != 0 {
+                result += current;
+            }
+            current += current;
+            coefficient >>= 1;
+        }
+
+        result
+    }
 }
 
 impl<const P: i128> fmt::Display for Point<P> {
@@ -144,19 +160,7 @@ impl<const P: i128> ops::Mul<FieldElement<P>> for Point<P> {
     type Output = Self;
 
     fn mul(self, rhs: FieldElement<P>) -> Self::Output {
-        let mut current = self;
-        let mut result = Point::<P>::infinity(self.a, self.b);
-        let mut coefficient = rhs.0;
-
-        while coefficient > 0 {
-            if coefficient & 1 != 0 {
-                result += current;
-            }
-            current += current;
-            coefficient >>= 1;
-        }
-
-        result
+        self.do_mul(rhs)
     }
 }
 
@@ -164,19 +168,7 @@ impl<const P: i128> ops::Mul<Point<P>> for FieldElement<P> {
     type Output = Point<P>;
 
     fn mul(self, rhs: Point<P>) -> Self::Output {
-        let mut current = rhs;
-        let mut result = Point::<P>::infinity(rhs.a, rhs.b);
-        let mut coefficient = self.0;
-
-        while coefficient > 0 {
-            if coefficient & 1 != 0 {
-                result += current;
-            }
-            current += current;
-            coefficient >>= 1;
-        }
-
-        result
+        rhs.do_mul(self)
     }
 }
 
