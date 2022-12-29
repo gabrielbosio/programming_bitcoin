@@ -21,8 +21,8 @@ impl<const P: i128> Point<P> {
         Self::init(Some(x), Some(y), a, b)
     }
 
-    pub fn infinity(a: FieldElement<P>, b: FieldElement<P>) -> Result<Self, String> {
-        Self::init(None, None, a, b)
+    pub fn infinity(a: FieldElement<P>, b: FieldElement<P>) -> Self {
+        Self::init(None, None, a, b).unwrap()
     }
 
     fn init(
@@ -243,10 +243,9 @@ mod tests {
                 (x2_raw, y2_raw) => {
                     let p2_x = FieldElement::<PRIME>::new(x2_raw);
                     let p2_y = FieldElement::<PRIME>::new(y2_raw);
-                    Point::<PRIME>::new(p2_x, p2_y, a, b)
+                    Point::<PRIME>::new(p2_x, p2_y, a, b).unwrap()
                 }
-            }
-            .unwrap();
+            };
 
             assert_eq!(scalar * p1, p2);
         }
