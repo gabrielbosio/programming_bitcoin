@@ -1,8 +1,8 @@
 use std::fmt;
 use std::ops;
 
-#[derive(Debug, Eq)]
-pub struct FieldElement<const P: i128>(i128);
+#[derive(Copy, Clone, Debug, Eq)]
+pub struct FieldElement<const P: i128>(pub i128);
 
 impl<const P: i128> FieldElement<P> {
     pub fn new(num: i128) -> Self {

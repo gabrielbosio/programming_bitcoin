@@ -1,2 +1,2 @@
-mod field_element;
-mod point;
+pub mod field_element;
+pub mod point;
